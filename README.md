@@ -221,6 +221,86 @@
 </div>
 <br/>
 
+### :package: Create SG
+
+<br/>
+<div align="right">
+    <b><a href="#Project-08">↥ back to top</a></b>
+</div>
+<br/>
+
+#### :package: Windows server
+
+<br/>
+<div align="right">
+    <b><a href="#Project-08">↥ back to top</a></b>
+</div>
+<br/>
+
+#### :package: Tomcat & backend servers
+
+<br/>
+<div align="right">
+    <b><a href="#Project-08">↥ back to top</a></b>
+</div>
+<br/>
+
+### :package: Setup tomcat & backend server on ec2 with user data
+
+<br/>
+<div align="right">
+    <b><a href="#Project-08">↥ back to top</a></b>
+</div>
+<br/>
+
+### :package: Create Jenkins Job to Deploy artifact to Staging
+
+<br/>
+<div align="right">
+    <b><a href="#Project-08">↥ back to top</a></b>
+</div>
+<br/>
+
+### :package: Add windows node as slave to Jenkins
+
+<br/>
+<div align="right">
+    <b><a href="#Project-08">↥ back to top</a></b>
+</div>
+<br/>
+
+### :package: Create Job to run Software Tests
+
+<br/>
+<div align="right">
+    <b><a href="#Project-08">↥ back to top</a></b>
+</div>
+<br/>
+
+### :package: Deploy artifact to Production tomcat server
+
+<br/>
+<div align="right">
+    <b><a href="#Project-08">↥ back to top</a></b>
+</div>
+<br/>
+
+### :package: Connect all the jobs with Build Pipeline
+
+<br/>
+<div align="right">
+    <b><a href="#Project-08">↥ back to top</a></b>
+</div>
+<br/>
+
+### :package: Test it by committing code to github
+
+<br/>
+<div align="right">
+    <b><a href="#Project-08">↥ back to top</a></b>
+</div>
+<br/>
+
 ## :earth_africa: Verify from browser
 
 <br/>
