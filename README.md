@@ -30,8 +30,8 @@
   - [Make Code change](#hammer_and_wrench-make-code-change)
   - [Create SG](#package-create-sg)
     - [Windows server](#package-windows-server)
-    - [Tomcat & backend servers](#package-tomcat-&-backend-servers)
-  - [Setup tomcat & backend server on ec2 with user data](#package-setup-tomcat-&-backend-server-on-ec2-with-user-data)
+    - [Tomcat and backend servers](#package-tomcat-and-backend-servers)
+  - [Setup tomcat and backend server on ec2 with user data](#package-setup-tomcat-and-backend-server-on-ec2-with-user-data)
   - [Create Jenkins Job to Deploy artifact to Staging](#package-create-jenkins-job-to-deploy-artifact-to-staging)
   - [Add windows node as slave to Jenkins](#package-add-windows-node-as-slave-to-jenkins)
   - [Create Job to run Software Tests](#package-create-job-to-run-software-tests)
@@ -85,7 +85,7 @@
 <br/>
 
 
-## :beginner: Architecture of this project.
+## :house: Architecture of this project.
 
 ![Project Image](project-image-url)
 
