@@ -823,7 +823,7 @@ post{
 </div>
 <br/>
 
-#### :package: Tomcat & backend servers
+#### :package: Tomcat and backend servers
 
 <br/>
 <div align="right">
@@ -831,7 +831,7 @@ post{
 </div>
 <br/>
 
-### :package: Setup tomcat & backend server on ec2 with user data
+### :package: Setup tomcat and backend server on ec2 with user data
 
 <br/>
 <div align="right">
