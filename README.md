@@ -810,6 +810,28 @@ post{
 ### :package: Change Branch
 
 
+- Login to your jenkins server.
+- On your Jenkins dashboard, open the `Build` job click on `configure` and change to a new branch. We have to change to this new branch because it contains the code for continous delivery.
+
+
+```sh
+Scroll down to Source Code Management
+Branch Specifier: */cd-jenkins
+   ```
+
+- Follow the procedure above and change the branch of all the jobs we created earlier but for the `Code Analysis` job add the following. 
+
+- On your Jenkins dashboard, open the `Code Analysis` job click on `configure` and change to a new branch. 
+
+
+```sh
+Scroll down to Source Code Management
+Branch Specifier: */cd-jenkins
+Under post build action 
+Report Violation
+change checkstyle to 10 1000 100
+   ```
+   
 
 <br/>
 <div align="right">
