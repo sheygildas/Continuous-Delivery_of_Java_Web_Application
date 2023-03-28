@@ -830,6 +830,7 @@ Branch Specifier: */cd-jenkins
 Under post build action 
 Report Violation
 change checkstyle to 10 1000 100
+save
    ```
    
 
@@ -841,6 +842,9 @@ change checkstyle to 10 1000 100
 
 ### :package: Create SG
 
+- Create two security group for the Windows server and Tomcat and backend servers
+
+
 <br/>
 <div align="right">
     <b><a href="#Project-08">↥ back to top</a></b>
@@ -848,6 +852,20 @@ change checkstyle to 10 1000 100
 <br/>
 
 #### :package: Windows server
+
+
+- On your console under `EC2`-> `security group` click `create security group`.
+- Create a security group for the `Windows server` with the following details.
+
+```sh
+Name: Windows-Server-SofTest
+Description: Windows-Server-SofTest
+Tag: Windows-Server-SofTest
+Allow: RDP from MYIP
+Allow: all traffic from vprofile-jenkins-sg
+
+   ```
+
 
 <br/>
 <div align="right">
@@ -857,6 +875,22 @@ change checkstyle to 10 1000 100
 
 #### :package: Tomcat and backend servers
 
+- On your console under `EC2`-> `security group` click `create security group`.
+- Create a security group for `Tomcat` with the following details.
+
+```sh
+Nam1e: vprofile-app-backend-staging
+Description: vprofile-app-backend-staging
+Tag: vprofile-app-staging-sg
+Allow: 8080 from MY IP 
+Allow: port 22 from MY IP
+Allow: port 22 from vprofile-jenkins-sg
+Allow: 8080 from Windows-Server-SofTest
+Allow: RDP from MYIP
+Allow: all traffic from vprofile-jenkins-sg
+
+   ```
+
 <br/>
 <div align="right">
     <b><a href="#Project-08">↥ back to top</a></b>
@@ -865,6 +899,212 @@ change checkstyle to 10 1000 100
 
 ### :package: Setup tomcat and backend server on ec2 with user data
 
+
+- On your console under `EC2`->`Instances` click `launch instances`.
+- We will create `Tomcat` with below details.
+
+
+```sh
+Name: Tomcat-server
+AMI: Ubuntu 20.04
+SecGrp: vprofile-app-backend-staging
+InstanceType: t2.small
+Tga: app01-staging-vprofile
+Userdata: use the userdata given below.
+KeyPair: ci-vprofile-key
+
+   ```
+   
+ - Use the script below as userdata to launch our backend services
+
+
+```sh
+#!/bin/bash
+sudo apt update
+sudo apt install openjdk-8-jdk -y
+sudo apt install git wget unzip -y
+sudo apt install awscli -y
+TOMURL="https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.37/bin/apache-tomcat-8.5.37.tar.gz"
+cd /tmp/
+wget $TOMURL -O tomcatbin.tar.gz
+EXTOUT=`tar xzvf tomcatbin.tar.gz`
+TOMDIR=`echo $EXTOUT | cut -d '/' -f1`
+useradd --shell /sbin/nologin tomcat
+rsync -avzh /tmp/$TOMDIR/ /usr/local/tomcat8/
+rm -rf /usr/local/tomcat8/conf/tomcat-users.xml
+rm -rf /usr/local/tomcat8/webapps/manager/META-INF/context.xml
+touch /usr/local/tomcat8/webapps/manager/META-INF/context.xml
+touch /usr/local/tomcat8/conf/tomcat-users.xml
+cat <<EOT>> /usr/local/tomcat8/conf/tomcat-users.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<tomcat-users xmlns="http://tomcat.apache.org/xml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://tomcat.apache.org/xml tomcat-users.xsd"
+version="1.0">
+<!--
+  NOTE:  By default, no user is included in the "manager-gui" role required
+  to operate the "/manager/html" web application.  If you wish to use this app,
+  you must define such a user - the username and password are arbitrary. It is
+  strongly recommended that you do NOT use one of the users in the commented out
+  section below since they are intended for use with the examples web
+  application.
+-->
+<!--
+  NOTE:  The sample user and role entries below are intended for use with the
+  examples web application. They are wrapped in a comment and thus are ignored
+  when reading this file. If you wish to configure these users for use with the
+  examples web application, do not forget to remove the <!.. ..> that surrounds
+  them. You will also need to set the passwords to something appropriate.
+-->
+  <role rolename="manager-gui"/>
+  <role rolename="manager-script"/>
+  <user username="tomcat" password="admin123" roles="manager-gui,manager-script"/>
+</tomcat-users>
+EOT
+
+cat <<EOT>> /usr/local/tomcat8/webapps/manager/META-INF/context.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<Context antiResourceLocking="false" privileged="true" >
+<!--
+  <Valve className="org.apache.catalina.valves.RemoteAddrValve"
+         allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" />
+  <Manager sessionAttributeValueClassNameFilter="java\.lang\.(?:Boolean|Integer|Long|Number|String)|org\.apache\.catalina\.filters\.CsrfPreventionFilter\$LruCache(?:\$1)?|java\.util\.(?:Linked)?HashMap"/>
+-->
+</Context>
+EOT
+chown -R tomcat.tomcat /usr/local/tomcat8 
+cat <<EOT>> /etc/systemd/system/tomcat.service
+[Unit]
+Description=Tomcat
+After=network.target
+
+[Service]
+User=tomcat
+WorkingDirectory=/usr/local/tomcat8
+Environment=CATALINA_HOME=/usr/local/tomcat8
+Environment=CATALINE_BASE=/usr/local/tomcat8
+ExecStart=/usr/local/tomcat8/bin/catalina.sh run
+ExecStop=/usr/local/tomcat8/bin/shutdown.sh
+SyslogIdentifier=tomcat-%i
+
+[Install]
+WantedBy=multi-user.target
+EOT
+
+systemctl daemon-reload
+systemctl start tomcat
+systemctl enable tomcat
+
+
+   ```
+
+   
+- On your console under EC2->Instances click launch instances.
+- We will create Backend-server with below details.
+
+
+```sh
+Name: Backens-Server
+AMI: centos 7
+SecGrp: vprofile-app-backend-staging
+InstanceType: t2.small
+Tga: be01-staging-vprofile
+Userdata: use the userdata given below.
+KeyPair: ci-vprofile-key
+
+   ```
+   
+- Use the script below as userdata to launch our backend services
+
+```sh
+#!/bin/bash
+DATABASE_PASS='admin123'
+yum update -y
+yum install epel-release -y
+yum install mariadb-server -y
+yum install wget git unzip -y
+
+#mysql_secure_installation
+sed -i 's/^127.0.0.1/0.0.0.0/' /etc/my.cnf
+
+# starting & enabling mariadb-server
+systemctl start mariadb
+systemctl enable mariadb
+
+#restore the dump file for the application
+cd /tmp/
+wget https://raw.githubusercontent.com/devopshydclub/vprofile-repo/vp-rem/src/main/resources/db_backup.sql
+mysqladmin -u root password "$DATABASE_PASS"
+mysql -u root -p"$DATABASE_PASS" -e "UPDATE mysql.user SET Password=PASSWORD('$DATABASE_PASS') WHERE User='root'"
+mysql -u root -p"$DATABASE_PASS" -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')"
+mysql -u root -p"$DATABASE_PASS" -e "DELETE FROM mysql.user WHERE User=''"
+mysql -u root -p"$DATABASE_PASS" -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%'"
+mysql -u root -p"$DATABASE_PASS" -e "FLUSH PRIVILEGES"
+mysql -u root -p"$DATABASE_PASS" -e "create database accounts"
+mysql -u root -p"$DATABASE_PASS" -e "grant all privileges on accounts.* TO 'admin'@'localhost' identified by 'admin123'"
+mysql -u root -p"$DATABASE_PASS" -e "grant all privileges on accounts.* TO 'admin'@'%' identified by 'admin123'"
+mysql -u root -p"$DATABASE_PASS" accounts < /tmp/db_backup.sql
+mysql -u root -p"$DATABASE_PASS" -e "FLUSH PRIVILEGES"
+
+# Restart mariadb-server
+systemctl restart mariadb
+# SETUP MEMCACHE
+yum install memcached -y
+systemctl start memcached
+systemctl enable memcached
+systemctl status memcached
+memcached -p 11211 -U 11111 -u memcached -d
+sleep 30
+yum install socat -y
+yum install wget -y
+wget https://www.rabbitmq.com/releases/rabbitmq-server/v3.6.10/rabbitmq-server-3.6.10-1.el7.noarch.rpm
+rpm --import https://www.rabbitmq.com/rabbitmq-release-signing-key.asc
+yum update
+rpm -Uvh rabbitmq-server-3.6.10-1.el7.noarch.rpm
+systemctl start rabbitmq-server
+systemctl enable rabbitmq-server
+systemctl status rabbitmq-server
+echo "[{rabbit, [{loopback_users, []}]}]." > /etc/rabbitmq/rabbitmq.config
+rabbitmqctl add_user test test
+rabbitmqctl set_user_tags test administrator
+systemctl restart rabbitmq-server
+
+
+
+   ```
+   
 <br/>
 <div align="right">
     <b><a href="#Project-08">↥ back to top</a></b>
