@@ -1400,6 +1400,70 @@ Run the pipeline job
 <br/>
 
 ### :package: Deploy artifact to Production tomcat server
+  
+  
+- On your console under EC2->Instances click launch instances.
+- We will create `production` server with below details.
+
+
+```sh
+Name:   Production server
+AMI: Ubuntu 20.04
+SecGrp: vprofile-app-staging-sg
+InstanceType: t2.small
+Tga: app01-staging-vprofile
+KeyPair: ci-vprofile-key
+
+   ```
+- On your jenkins goto `New Item` create a job and give the details below
+
+```sh
+Item name: Deploy-to-Nexus-for-Prod
+click freestyle
+Scroll down and copy it from Deploy-to-Nexus Job that was created earlier.
+  Add build step
+  select invoke top level maven targets 
+  Goal: install
+  properties 
+  Add aother build step
+  select execute shell
+  commands: enter the command below 
+  
+  
+  cat << EOT > src/main/resouces/application.properties
+
+#JDBC Configutation for Database Connection
+jdbc.driverClassName=com.mysql.jdbc.Driver
+jdbc.url=jdbc:mysql://db01:3306/accounts?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
+jdbc.username=admin
+jdbc.password=admin123
+
+#Memcached Configuration For Active and StandBy Host
+#For Active Host
+memcached.active.host=mc01
+memcached.active.port=11211
+#For StandBy Host
+memcached.standBy.host=127.0.0.2
+memcached.standBy.port=11211
+
+#RabbitMq Configuration
+rabbitmq.address=rmq01
+rabbitmq.port=5672
+rabbitmq.username=test
+rabbitmq.password=test
+
+#Elasticesearch Configuration
+elasticsearch.host =192.168.1.85
+elasticsearch.port =9300
+elasticsearch.cluster=vprofile
+elasticsearch.node=vprofilenode
+EOT
+  
+   
+Save changes
+   ```
+  
+  
 
 <br/>
 <div align="right">
@@ -1408,6 +1472,24 @@ Run the pipeline job
 <br/>
 
 ### :package: Connect all the jobs with Build Pipeline
+  
+  
+- Connect Job to the pipeline
+- On your Jenkins open the `Selenium-Test-Suite` job click on `configure` and make the following changes.
+
+
+```sh
+Scroll down to post build action
+Add post buil action
+select build other projects manual step
+project to build : Deploy-to-Nexus-Prod
+Add parameters 
+TIME= $BUILD_TIMEstamp
+ID=$BUILD_ID
+SAVE CHANGES
+   ```
+
+- Run the job, now sign into your nexus server you will see the production artifact ready 
 
 <br/>
 <div align="right">
