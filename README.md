@@ -1221,7 +1221,7 @@ select execute shell
 command: sleep 60
 add another build step
 select HTTP request
-URL: http://<tomcat server public Ip>:8080
+URL: http://<tomcat server public Ip>:8080/vproapp/login
 save
    ```
   
@@ -1268,14 +1268,131 @@ click ok
 
 ### :package: Add windows node as slave to Jenkins
 
+- Let's launch our windows server instance 
+- On your console under `EC2`-> `Instances` click `launch instances`.
+- We will create Windows-server with below details.
+
+```sh
+Name: Windows-server
+AMI:   server 2019 base
+SecGrp: Windows-Server-SofTest
+InstanceType: t2.small
+Userdata: use the userdata given below
+KeyPair: ci-vprofile-key
+
+   ```
+   
+```sh
+<powershell>
+Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+choco install jdk8 -y 
+choco install maven -y 
+choco install googlechrome -y
+choco install git -y
+mkdir C:\jenkins
+</powershell>
+
+   ```
+   
+- Add a rule to jenkins secuirty group to allow all traffic from windows server security group
+- On the AWS console. select your Windows server then click `connect` -> `RDP Client`- > `Get password`. Now upload your private key of ci-vprofile-key
+- Click on decrypt password to get your password. Store the password and the public IP of your windows instance
+- Now RDP into your intances using th public IP of the windows server. Enter your credentials to login into the server 
+
+- Open the browser on your windows server and enter `jenkins public IP` on your url  on port 8080. Login into your Jenkins server using your credential. 
+- On your jenkins dashboard goto `Manage jenkins`-> `configure system` and give the details below
+
+
+```sh
+Scroll down to Jenkins location
+Jenkins URL: http://<JNKINS PRIVATE IP>/8080/
+Save changes
+   ```
+   
+- On your jenkins dasboard goto `Manage jenkins`-> `Manage Nodes and Clouds` and give the details below
+
+
+```sh
+Clic add new node
+Name: vprofile-softwareTest
+select parmanent agent 
+click ok
+Remote root directory: c/jenkins (please create this directory on your windows server c drive before adding it here)
+launch method: launch agent by connecting it to the master 
+custom work directory: c/jenkins
+select use socket 
+Save changes
+   ```
+
+- On your jenkins goto `Manage jenkins`-> `configure global security` and give the details below
+
+
+```sh
+scroll down to Agent
+TCP port for inbound agent: select fixed and enter 8090
+Save changes
+   ```
+   
+- On your jenkins goto `Manage jenkins`-> `Manage Nodes and Clouds` and copy the entire  `run agent from command line ....` command and goto your CMD and run the command.
+- Now our windows server is connected as a slave.
+
+
 <br/>
 <div align="right">
     <b><a href="#Project-08">↥ back to top</a></b>
 </div>
 <br/>
-
+ 
 ### :package: Create Job to run Software Tests
+  
+- On your jenkins goto `New Item` create a job and give the details below
 
+```sh
+Item name: Selenium-Test-Suits
+click freestyle
+copy it fro the Build job 
+Under general, select retrict where this project can run the put vprofile_softwareTest-Node
+Scroll down and copy it from Build Job that was created earlier.
+Change the branch to */seleniumsuite
+Add build step
+select execute windows batch command 
+Command: enter the following command make sure you replace the url in the command with tomcat public ip
+  
+  
+echo package DevOPS.devOPS; > src\test\java\DevOPS\devOPS\Variables.java
+echo public class Variables { >> src\test\java\DevOPS\devOPS\Variables.java
+echo 	public static final String URL ="http://<tomcat public IP>:8080/vproapp/login"; >> src\test\java\DevOPS\devOPS\Variables.java
+echo 	public static final String UserName ="admin_vp"; >> src\test\java\DevOPS\devOPS\Variables.java
+echo 	public static final String Password ="admin_vp"; >> src\test\java\DevOPS\devOPS\Variables.java
+echo 	public static final String ScreenShotPath ="C:\\jenkins\\screenshots"; >> src\test\java\DevOPS\devOPS\Variables.java
+echo }>> src\test\java\DevOPS\devOPS\Variables.java
+
+Goals: clean, test -Dsurefir.suiteXmlFiles=testing.xml 
+  
+Revove the execute shell script
+Remove the archive artifact 
+remove build other project 
+Invoke top level maven target 
+Save changes
+   ```
+  
+  
+- RUN the job. This job will automatically login to our windows server, take the screenshot of the login page of our app and store it in jenkins server and windows server as well .
+
+  
+- Connec the job to our pipeline   
+- On your Jenkins open the `TestURL` job click on `configure` and make the following changes.
+
+
+```sh
+Scroll down to post build action
+Add post buil action
+select trigger parameterze build on other projects 
+project to build : Selenium-Test-Suite  
+
+SAVE CHANGES
+   ```
+Run the pipeline job 
 <br/>
 <div align="right">
     <b><a href="#Project-08">↥ back to top</a></b>
