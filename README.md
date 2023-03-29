@@ -1113,6 +1113,89 @@ systemctl restart rabbitmq-server
 
 ### :package: Create Jenkins Job to Deploy artifact to Staging
 
+
+- Goto your AWS console copy the SonarQube public IP address.
+- Paste the IP on your browser and login into the server using the your server credentials. 
+- Change the quality gates of the SonarQube server to allow 100 bugs in the code. 
+
+
+
+- Open your browser and enter `jenkins public IP` on your url. Login into your Jenkins server using your credential. 
+- On your jenkins dashboard, goto `Manage jenkins`-> `manage plugins` and install a plugin called `Deploy to container`
+- After installing the plugin, create a job by going to `New Item` and use the following detals.
+
+
+```sh
+Item name: vprofile-staging-deploy
+click freestyle
+Scroll down  to Build and add build step
+select copy the artifact from Build Job that was created earlier.
+Artifact to copy: **/*.war
+save
+   ```
+- RUN this job and when it is done you should have your artifact under the workspace
+- After running the job, open the `vprofile-staging-deploy`job and goto `configure` and macke the following changes to the job.
+
+```sh
+Scroll down to post build action
+Add post buil action
+select deploy war/ear to a container
+WAR/EAR file: target/vprofile-v2.war
+context path:vproapp
+container: tomcat 8
+Add credentials: 
+username: tomcat
+password:admin123
+ID: tomcat-stagging-Login
+Description: tomcat-stagging-Login
+click add
+select the credentials you just added
+url: <private IP of tomcate>:8080
+SAVE CHANGES
+   ```
+- RUN this job and when it is done, open your browser and enter  <tomcat public IP>:8080 go to the manager app of tomcat and login using the credentials username `tomcat`, password `admin123`  and you should see our `vproapp` automatically deployed to the server. Click on it and you should see the login page.
+
+  
+
+
+- On your Jenkins dashboard, open the `Build` job click on `configure` and make the following changes.This script will update our application.properties file to connect to our database.
+
+- Replace db01, mc01 and rmq01 in the script below with the private ip of your backend server on AWS 
+- 
+```sh
+Scroll down to Build  
+execute shell: copy and paste the cript below.
+
+cat << EOT > src/main/resouces/application.properties
+
+#JDBC Configutation for Database Connection
+jdbc.driverClassName=com.mysql.jdbc.Driver
+jdbc.url=jdbc:mysql://db01:3306/accounts?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
+jdbc.username=admin
+jdbc.password=admin123
+
+#Memcached Configuration For Active and StandBy Host
+#For Active Host
+memcached.active.host=mc01
+memcached.active.port=11211
+#For StandBy Host
+memcached.standBy.host=127.0.0.2
+memcached.standBy.port=11211
+
+#RabbitMq Configuration
+rabbitmq.address=rmq01
+rabbitmq.port=5672
+rabbitmq.username=test
+rabbitmq.password=test
+
+#Elasticesearch Configuration
+elasticsearch.host =192.168.1.85
+elasticsearch.port =9300
+elasticsearch.cluster=vprofile
+elasticsearch.node=vprofilenode
+EOT
+
+   ```
 <br/>
 <div align="right">
     <b><a href="#Project-08">↥ back to top</a></b>
