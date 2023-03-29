@@ -1196,6 +1196,70 @@ elasticsearch.node=vprofilenode
 EOT
 
    ```
+ 
+- connect the job to your pipeline  
+  
+- On your Jenkins dasboard, open the `Deploy-to-Nexus` job click on `configure` and make the following changes.
+
+
+```sh
+Scroll down to post build action
+Add post buil action
+select build on other projects 
+project to build : vprofile-stagging-deploy 
+SAVE CHANGES
+   ```
+- On your jenkins dashboard, goto `Manage jenkins`-> `manage plugins` and install a plugin called `HTTP request`
+- After installing the plugin, create a job by going to `New Item` and use the following detals.
+
+
+```sh
+Item name: TestURL
+click freestyle
+Scroll down  to Build and add build step
+select execute shell
+command: sleep 60
+add another build step
+select HTTP request
+URL: http://<tomcat server public Ip>:8080
+save
+   ```
+  
+- connect the job to your pipeline   
+- On your Jenkins dasboard, open the `vprofile-stagging-deploy ` job click on `configure` and make the following changes.
+
+
+```sh
+Scroll down to post build action
+Add post buil action
+select build on other projects 
+project to build : TestURL
+Add another post buil action
+  select slack Notification
+Choose the options you wan to get notified for.
+  click on advance 
+  select slack token
+  channel:#vprofile-jenkins 
+  test connection
+SAVE CHANGES
+   ```
+  
+  
+- Also add slack notification to all jobs in your pipeline.
+  
+  
+
+- Create a new view and called it vprofile-continuous-delivery click pipeline view then  ok
+
+- On edit view enter the following details 
+
+```sh
+initial job: Build 
+click ok
+   ```
+   
+- Now RUN your vprofile-continuous-delivery pipeline 
+  
 <br/>
 <div align="right">
     <b><a href="#Project-08">↥ back to top</a></b>
